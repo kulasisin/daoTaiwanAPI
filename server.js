@@ -4,14 +4,14 @@ const mongoose = require("mongoose");
 const formidable = require("formidable");
 const errHandle = require("./errorHandle");
 const express = require("express");
-const cors = require("cors");
+// const cors = require("cors");
 
-const corsOptions = {
-  origin: "http://localhost:3000",
-};
+// const corsOptions = {
+//   origin: "http://localhost:3000",
+// };
 
 const app = express();
-app.use(cors(corsOptions));
+// app.use(cors(corsOptions));
 
 const path = require("path");
 
@@ -121,4 +121,5 @@ const requestListener = async (req, res) => {
 };
 
 const server = http.createServer(requestListener);
-server.listen(8080);
+const PORT = process.env.PORT || 8080; // Render 使用环境变量设置端口
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
