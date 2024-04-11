@@ -122,4 +122,4 @@ const requestListener = async (req, res) => {
 
 const server = http.createServer(requestListener);
 const PORT = process.env.PORT || 8080; // Render 使用环境变量设置端口
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
