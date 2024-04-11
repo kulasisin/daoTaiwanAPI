@@ -92,7 +92,7 @@ const requestListener = async (req, res) => {
         });
 
         const result = await newImage.save(); // 保存到数据库
-        res.writeHead(200, { "Content-Type": "application/json" });
+        res.writeHead(200, headers);
         res.end(
           JSON.stringify({
             message: "File uploaded and saved",
