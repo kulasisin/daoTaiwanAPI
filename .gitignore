@@ -5,4 +5,4 @@ server_base64.js
 mongodb.atlas
 public
 .env
-cred.json
+cred.json 
