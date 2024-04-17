@@ -22,7 +22,9 @@ const ImageSchema = new mongoose.Schema(
   {
     filename: String,
     url: String,
+    category: String,
     gcsId: String,
+    
   },
   { collection: "textureImages" }
 );
@@ -59,7 +61,9 @@ const requestListener = async (req, res) => {
       }
       const file = files.image[0];
       const filePath = file.filepath;
-      const fileName = file.originalFilename;
+      const originalFileName = file.originalFilename;
+      const fileType = Array.isArray(fields.type) ? fields.type[0] : fields.type;
+      const fileName = `${fileType}-${originalFileName}`;
       const blob = bucket.file(fileName);
       const blobStream = blob.createWriteStream({ resumable: false });
 
@@ -76,6 +80,7 @@ const requestListener = async (req, res) => {
           const newImage = new Image({
             filename: fileName,
             url: publicUrl,
+            category: fileType,
             gcsId: blob.id,
           });
           await newImage.save();
