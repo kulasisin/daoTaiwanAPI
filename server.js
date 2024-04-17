@@ -13,18 +13,14 @@ const bucket = storage.bucket(process.env.GCLOUD_STORAGE_BUCKET);
 
 const fs = require("fs");
 
-// storage.getBuckets().then((x) => console.log(x));
-// MongoDB连接
 mongoose.connect(process.env.MONGO_URI);
 
-// Image Schema
 const ImageSchema = new mongoose.Schema(
   {
     filename: String,
     url: String,
     category: String,
     gcsId: String,
-    
   },
   { collection: "textureImages" }
 );
@@ -62,7 +58,9 @@ const requestListener = async (req, res) => {
       const file = files.image[0];
       const filePath = file.filepath;
       const originalFileName = file.originalFilename;
-      const fileType = Array.isArray(fields.type) ? fields.type[0] : fields.type;
+      const fileType = Array.isArray(fields.type)
+        ? fields.type[0]
+        : fields.type;
       const fileName = `${fileType}-${originalFileName}`;
       const blob = bucket.file(fileName);
       const blobStream = blob.createWriteStream({ resumable: false });
