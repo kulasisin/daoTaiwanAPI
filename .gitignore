@@ -1,8 +1,8 @@
 node_modules
 app.js
-app_copy.js
-server_base64.js
 mongodb.atlas
 public
 .env
+config.env
 cred.json 
+oldfiles
