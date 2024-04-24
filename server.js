@@ -40,17 +40,6 @@ const resultBucket = resultStorage.bucket(
 );
 const texutureImage = require("./models/textureImages");
 const resultImage = require("./models/resultImages");
-// const ResultImageSchema = new mongoose.Schema(
-//   {
-//     originalId: String,
-//     filename: String,
-//     url: String,
-//     category: String,
-//     gcsId: String,
-//   },
-//   { collection: "resultImages" }
-// );
-// const ResultImage = mongoose.model("ResultImage", ResultImageSchema);
 
 app.use(express.json()); // for parsing application/json
 app.use(express.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
@@ -130,7 +119,7 @@ app.post("/upload", (req, res) => {
   });
 });
 
-app.post("/result/upload", async (req, res) => {
+app.post("/result/upload/test", async (req, res) => {
   const { originalImageId } = req.body;
 
   try {
@@ -183,6 +172,55 @@ app.post("/result/upload", async (req, res) => {
   }
 });
 
+app.post("/result/upload", async (req, res) => {
+  const { originalImageId, imageData } = req.body;
+
+  try {
+    // 从 MongoDB 获取原始图片信息
+    const originalImage = await texutureImage.findById(originalImageId);
+    if (!originalImage) {
+      return res.status(404).json({ error: "Original image not found." });
+    }
+
+    // 生成新文件名
+    const newFileName = `processed-${originalImage.filename}`;
+
+    // 上传处理后的图片到新的 GCS bucket
+    const file = resultBucket.file(newFileName);
+    await file.save(imageData, {
+      resumable: false,
+      validation: false,
+    });
+
+    // 获取新图片的公共 URL
+    await file.makePublic();
+    const publicUrl = file.publicUrl();
+
+    // 保存结果到 MongoDB
+    const newresultImage = new resultImage({
+      originalId: originalImageId,
+      filename: newFileName,
+      url: publicUrl,
+      category: originalImage.category,
+      gcsId: file.id,
+      originalImageId: originalImageId,
+    });
+    await newresultImage.save();
+
+    res.json({
+      message:
+        "Image uploaded to GCS and metadata saved to MongoDB successfully",
+      data: newresultImage,
+    });
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .json({
+        error: "Failed to upload image to GCS and save metadata to MongoDB.",
+      });
+  }
+});
 // Handle OPTIONS requests for CORS pre-flight checks
 // app.options("*", (req, res) => {
 //   res
