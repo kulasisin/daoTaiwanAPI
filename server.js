@@ -44,7 +44,7 @@ const resultImage = require("./models/resultImages");
 //設置 Multer 儲存到臨時目錄 /uploads
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, "uploads/"); // 上傳文件到/uploads
+    cb(null, "/uploads/"); // 上傳文件到/uploads
   },
   filename: function (req, file, cb) {
     cb(null, Date.now() + "-" + file.originalname); // 檔案加上時間戳記
