@@ -52,7 +52,7 @@ app.post("/result/upload", async (req, res) => {
       }
       // console.log(fields);
       const { originalImageId } = fields;
-      // console.log(originalImageId); // 确认能够正确获取到 originalImageId
+      // console.log(originalImageId);
       const originalImage = await texutureImage.findById(originalImageId[0]);
       if (!originalImage) {
         return res.status(404).json({ error: "Original image not found." });
@@ -62,7 +62,7 @@ app.post("/result/upload", async (req, res) => {
       const filePath = file.filepath;
       const originalId = originalImageId[0];
       const fileType = originalImage.category;
-      const fileName = `processed-${originalImage.filename}`;
+      const fileName = `processed-${file.originalFilename}`;
       const resultBlob = resultBucket.file(fileName);
       const resultBlobStream = resultBlob.createWriteStream({
         resumable: false,
@@ -74,13 +74,13 @@ app.post("/result/upload", async (req, res) => {
       });
 
       resultBlobStream.on("finish", async () => {
-        const publicUrl = `https://storage.googleapis.com/${resultBucket.name}/${resultBlob.name}`;
-
+        const publicResultUrl = `https://storage.googleapis.com/${resultBucket.name}/${resultBlob.name}`;
+        console.log( publicResultUrl);
         try {
           const newresultImage = new resultImage({
             originalId: originalId,
             filename: fileName,
-            url: publicUrl,
+            url: publicResultUrl,
             category: fileType,
             gcsId: resultBlob.id,
           });
