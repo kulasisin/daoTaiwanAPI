@@ -1,18 +1,18 @@
 require("dotenv").config();
-const dotenv = require("dotenv");
+require("./connections");
 const express = require("express");
 const fs = require("fs");
-require("./connections");
-const mongoose = require("mongoose");
 const formidable = require("formidable");
 const path = require("path");
 const { Storage } = require("@google-cloud/storage");
 const cors = require("cors");
 const app = express();
+const multer = require("multer");
 const axios = require("axios");
-const sharp = require("sharp");
 const PORT = process.env.PORT || 8080;
 
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(
   cors({
     origin: "*",
@@ -41,62 +41,67 @@ const resultBucket = resultStorage.bucket(
 const texutureImage = require("./models/textureImages");
 const resultImage = require("./models/resultImages");
 
-app.use(express.json()); // for parsing application/json
-app.use(express.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
-app.post("/result/upload", async (req, res) => {
-  const form = new formidable.IncomingForm();
+//設置 Multer 儲存到臨時目錄 /uploads
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "uploads/"); // 上傳文件到/uploads
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + "-" + file.originalname); // 檔案加上時間戳記
+  },
+});
+const upload = multer({ storage: storage });
+app.post("/result/upload", upload.single("imageData"), async (req, res) => {
   try {
-    form.parse(req, async (err, fields, files) => {
-      if (!files.imageData || !files.imageData[0]) {
-        return res.status(400).send("No image file uploaded.");
-      }
-      // console.log(fields);
-      const { originalImageId } = fields;
-      // console.log(originalImageId);
-      const originalImage = await texutureImage.findById(originalImageId[0]);
-      if (!originalImage) {
-        return res.status(404).json({ error: "Original image not found." });
-      }
+    if (!req.file) {
+      return res.status(400).send("No image file uploaded.");
+    }
+    const imageData = req.file;
+    console.log(req.body);
+    const originalImageId = req.body.originalImageId;
 
-      const file = files.imageData[0];
-      const filePath = file.filepath;
-      const originalId = originalImageId[0];
-      const fileType = originalImage.category;
-      const fileName = `processed-${file.originalFilename}`;
-      const resultBlob = resultBucket.file(fileName);
-      const resultBlobStream = resultBlob.createWriteStream({
-        resumable: false,
-      });
-
-      resultBlobStream.on("error", (err) => {
-        console.error(err);
-        res.status(500).json({ error: "Error writing to GCS." });
-      });
-
-      resultBlobStream.on("finish", async () => {
-        const publicResultUrl = `https://storage.googleapis.com/${resultBucket.name}/${resultBlob.name}`;
-        console.log( publicResultUrl);
-        try {
-          const newresultImage = new resultImage({
-            originalId: originalId,
-            filename: fileName,
-            url: publicResultUrl,
-            category: fileType,
-            gcsId: resultBlob.id,
-          });
-          await newresultImage.save();
-          res.json({
-            message: "File uploaded successfully",
-            data: newresultImage,
-          });
-        } catch (error) {
-          console.error(error);
-          res.status(500).json({ error: "Error saving to database." });
-        }
-      });
-
-      resultBlobStream.end(fs.readFileSync(filePath));
+    //取得資料庫中原始貼圖資料
+    const originalImage = await texutureImage.findById(originalImageId);
+    if (!originalImage) {
+      return res.status(404).json({ error: "Original image not found." });
+    }
+    const filePath = imageData.path;
+    const originalId = originalImageId;
+    const fileType = originalImage.category;
+    const fileName = `processed-${imageData.originalname}`;
+    const resultBlob = resultBucket.file(fileName);
+    const resultBlobStream = resultBlob.createWriteStream({
+      resumable: false,
     });
+
+    resultBlobStream.on("error", (err) => {
+      console.error(err);
+      res.status(500).json({ error: "Error writing to GCS." });
+    });
+
+    resultBlobStream.on("finish", async () => {
+      const publicResultUrl = `https://storage.googleapis.com/${resultBucket.name}/${resultBlob.name}`;
+      console.log(publicResultUrl);
+      try {
+        const newresultImage = new resultImage({
+          originalId: originalId,
+          filename: fileName,
+          url: publicResultUrl,
+          category: fileType,
+          gcsId: resultBlob.id,
+        });
+        await newresultImage.save();
+        res.json({
+          message: "File uploaded successfully",
+          data: newresultImage,
+        });
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Error saving to database." });
+      }
+    });
+
+    resultBlobStream.end(fs.readFileSync(filePath));
   } catch (error) {
     console.error(error);
     res.status(500).json({
@@ -104,12 +109,10 @@ app.post("/result/upload", async (req, res) => {
     });
   }
 });
-
 app.get("/images", async (req, res) => {
   const texutureImages = await texutureImage.find();
   res.json({ status: "success", data: texutureImages });
 });
-
 app.get("/results", async (req, res) => {
   try {
     const resultImages = await resultImage.find();
