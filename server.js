@@ -1,12 +1,16 @@
 require("dotenv").config();
 require("./connections");
 const express = require("express");
+const http = require("http");
+const socketIo = require("socket.io");
 const fs = require("fs");
 const formidable = require("formidable");
 const path = require("path");
 const { Storage } = require("@google-cloud/storage");
 const cors = require("cors");
 const app = express();
+const server = http.createServer(app); // 使用 Express 創建 http 服務
+const io = socketIo(server); //socket.io 與 http 綁定
 const multer = require("multer");
 const axios = require("axios");
 const PORT = process.env.PORT || 8080;
@@ -169,6 +173,7 @@ app.post("/upload", (req, res) => {
           gcsId: textureBlob.id,
         });
         await newtexutureImage.save();
+        io.emit("imageUploaded", { message: "New image uploaded" });
         res.json({
           message: "File uploaded successfully",
           data: newtexutureImage,
@@ -181,6 +186,12 @@ app.post("/upload", (req, res) => {
 
     textureBlobStream.end(fs.readFileSync(filePath));
   });
+});
+
+//socket 連接
+io.on("connection", (socket) => {
+  console.log("A client connected");
+  // 添加其他事件監聽
 });
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
