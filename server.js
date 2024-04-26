@@ -2,24 +2,29 @@ require("dotenv").config();
 require("./connections");
 const express = require("express");
 const fs = require("fs");
+const http = require('http')
 const formidable = require("formidable");
 const path = require("path");
 const { Storage } = require("@google-cloud/storage");
 const cors = require("cors");
-const app = express();
-const http = require("http").Server(app); // 使用 http.Server 建立伺服器
-const io = require("socket.io")(http); // 使用 socket.io 建立 socket
-
 const multer = require("multer");
 const axios = require("axios");
 const PORT = process.env.PORT || 8080;
 
+//socket 設定
+const socket = require('socket.io')
+const app = express();
+const server = http.createServer(app)
+const io = socket(server);
+
+
 // 中間件設定
 app.use(express.json()); // 解析 JSON 格式的請求主體
 app.use(express.urlencoded({ extended: true })); // 解析 URL 編碼的請求主體
+// app.use(cors());
 app.use(
   cors({
-    origin: "*", // 允許所有來源的跨來源請求
+    origin: "*", // 允許所有來源的跨來源請求 //需要設定
     methods: "GET,HEAD,PUT,PATCH,POST,DELETE", // 允許的 HTTP 方法
     allowedHeaders:
       "Content-Type, Authorization, Content-Length, X-Requested-With", // 允許的標頭欄位
@@ -30,6 +35,7 @@ app.use(
 
 // WebSocket 連線處理
 io.on("connection", function (socket) {
+  console.log("用戶進行連線成功！");
   // 當客戶端連線成功時發送歡迎訊息
   socket.emit("message", "連線成功！歡迎使用 WebSocket。");
 
@@ -219,5 +225,5 @@ app.post("/upload", (req, res) => {
 });
 
 // 啟動伺服器監聽指定埠口
-http.listen(PORT, () => console.log(`伺服器正在監聽埠口 ${PORT}`));
+server.listen(PORT, () => console.log(`伺服器正在監聽埠口 ${PORT}`));
 module.exports = app;
