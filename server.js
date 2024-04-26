@@ -7,10 +7,13 @@ const path = require("path");
 const { Storage } = require("@google-cloud/storage");
 const cors = require("cors");
 const app = express();
-require("./websocket/wss");
+// require("./websocket/wss");
 const multer = require("multer");
 const axios = require("axios");
 const PORT = process.env.PORT || 8080;
+
+// 使用 express-ws 中間件
+const expressWs = require("express-ws")(app);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -24,6 +27,18 @@ app.use(
     optionsSuccessStatus: 204,
   })
 );
+
+// WebSocket 連線處理
+app.ws("/", function (ws, req) {
+  // 當客戶端連線成功時發送歡迎訊息
+  ws.send("連線成功！歡迎使用 WebSocket。");
+
+  // 接收客戶端發送的訊息
+  ws.on("message", function (msg) {
+    console.log("Received message: ", msg);
+    ws.send("Server received message: " + msg);
+  });
+});
 const textureStorage = new Storage({
   keyFilename: path.join(__dirname, process.env.GOOGLE_APPLICATION_CREDENTIALS),
   projectId: "dao-420504",
