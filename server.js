@@ -14,7 +14,6 @@ const multer = require("multer");
 const axios = require("axios");
 const PORT = process.env.PORT || 8080;
 
-
 // 中間件設定
 app.use(express.json()); // 解析 JSON 格式的請求主體
 app.use(express.urlencoded({ extended: true })); // 解析 URL 編碼的請求主體
@@ -22,7 +21,8 @@ app.use(
   cors({
     origin: "*", // 允許所有來源的跨來源請求
     methods: "GET,HEAD,PUT,PATCH,POST,DELETE", // 允許的 HTTP 方法
-    allowedHeaders: "Content-Type, Authorization, Content-Length, X-Requested-With", // 允許的標頭欄位
+    allowedHeaders:
+      "Content-Type, Authorization, Content-Length, X-Requested-With", // 允許的標頭欄位
     preflightContinue: false, // 不繼續處理 preflight 請求
     optionsSuccessStatus: 204, // 設定成功處理 OPTIONS 請求的狀態碼
   })
@@ -45,13 +45,17 @@ const textureStorage = new Storage({
   keyFilename: path.join(__dirname, process.env.GOOGLE_APPLICATION_CREDENTIALS), // 設定金鑰檔案路徑
   projectId: "dao-420504", // 設定專案 ID
 });
-const textureBucket = textureStorage.bucket(process.env.GCLOUD_STORAGE_BUCKET_TEXTURE); // 指定儲存桶名稱
+const textureBucket = textureStorage.bucket(
+  process.env.GCLOUD_STORAGE_BUCKET_TEXTURE
+); // 指定儲存桶名稱
 
 const resultStorage = new Storage({
   keyFilename: path.join(__dirname, process.env.GOOGLE_APPLICATION_CREDENTIALS), // 設定金鑰檔案路徑
   projectId: "dao-420504", // 設定專案 ID
 });
-const resultBucket = resultStorage.bucket(process.env.GCLOUD_STORAGE_BUCKET_RESULT); // 指定儲存桶名稱
+const resultBucket = resultStorage.bucket(
+  process.env.GCLOUD_STORAGE_BUCKET_RESULT
+); // 指定儲存桶名稱
 
 const texutureImage = require("./models/textureImages"); // 載入貼圖影像模型
 const resultImage = require("./models/resultImages"); // 載入處理結果影像模型
@@ -86,7 +90,8 @@ app.post("/result/upload", upload.single("imageData"), async (req, res) => {
     const filePath = imageData.path;
     const originalId = originalImageId;
     const fileType = originalImage.category;
-    const fileName = `processed-${imageData.originalname}`;
+    const timestamp = Date.now(); // 取得時間戳記
+    const fileName = `processed-${timestamp}-${imageData.originalname}`; // 加上時間戳記
     const resultBlob = resultBucket.file(fileName);
     const resultBlobStream = resultBlob.createWriteStream({
       resumable: false,
