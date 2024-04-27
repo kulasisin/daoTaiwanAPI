@@ -28,6 +28,7 @@
     "pinia": "^2.1.7",
     "sharp": "^0.33.3",
     "socket.io": "^4.7.5",
+    "socket.io-client": "^4.7.5",
     "uuid": "^9.0.1",
     "vue": "^3.4.21",
     "vue-router": "^4.3.0",

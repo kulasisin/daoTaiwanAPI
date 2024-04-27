@@ -15,7 +15,7 @@ const DB =
 try {
   mongoose
     .connect(DB)
-    .then(() => console.log("Database connected successfully"));
+    .then(() => console.log("資料庫連線成功"));
 } catch (error) {
-  console.error("Failed to connect to database:", error);
+  console.error("資料庫連線失敗:", error);
 }

@@ -1,69 +1,49 @@
 require("dotenv").config();
 require("./connections");
-const express = require("express");
+const express = require('express');
+const http = require('http');
+const socket = require('socket.io');
 const fs = require("fs");
-const http = require("http");
 const formidable = require("formidable");
 const path = require("path");
 const { Storage } = require("@google-cloud/storage");
 const cors = require("cors");
 const multer = require("multer");
+const axios = require("axios");
 const PORT = process.env.PORT || 8080;
 
-const socket = require("socket.io");
-const app = express();
-const server = http.createServer(app);
-const io = socket(server, {
-  cors: {
-    // origin: "http://localhost:3000",
-    origin: "*",
-  },
-});
 //socket 設定
 
-// const app = express();
-// const server = http.createServer(app);
-// const io = socket(server);
+const app = express();
+const server = http.createServer(app)
+const io = socket(server);
+
 
 // 中間件設定
 app.use(express.json()); // 解析 JSON 格式的請求主體
 app.use(express.urlencoded({ extended: true })); // 解析 URL 編碼的請求主體
-// app.use(cors());
-app.use(
-  cors({
-    origin: "*", // 允許所有來源的跨來源請求 //需要設定
-    methods: "GET,HEAD,PUT,PATCH,POST,DELETE", // 允許的 HTTP 方法
-    allowedHeaders:
-      "Content-Type, Authorization, Content-Length, X-Requested-With", // 允許的標頭欄位
-    preflightContinue: false, // 不繼續處理 preflight 請求
-    optionsSuccessStatus: 204, // 設定成功處理 OPTIONS 請求的狀態碼
-  })
-);
+app.use(cors());
+// app.use(
+//   cors({
+//     origin: "*", // 允許所有來源的跨來源請求 //需要設定
+//     methods: "GET,HEAD,PUT,PATCH,POST,DELETE", // 允許的 HTTP 方法
+//     allowedHeaders:
+//       "Content-Type, Authorization, Content-Length, X-Requested-With", // 允許的標頭欄位
+//     preflightContinue: false, // 不繼續處理 preflight 請求
+//     optionsSuccessStatus: 204, // 設定成功處理 OPTIONS 請求的狀態碼
+//   })
+// );
 
 // WebSocket 連線處理
 io.on("connection", function (socket) {
   console.log("用戶進行連線成功！");
   // 當客戶端連線成功時發送歡迎訊息
-  socket.emit("message", "連線成功！歡迎使用 DAO Taiwan Socket。");
+  socket.emit("message", "連線成功！歡迎使用 WebSocket。");
 
   // 接收客戶端發送的訊息
   socket.on("message", function (msg) {
     console.log("Received message: ", msg);
     socket.emit("message", "Server received message: " + msg);
-  });
-
-  // 監聽來自網頁的開燈請求
-  socket.on("light-on", function (msg) {
-    console.log("收到網頁使用者觸發開燈請求:", msg);
-    // 向Unity端發送開燈請求通知
-    io.emit("light-on", { message: "網頁使用者觸發開燈請求", _id: msg._id });
-  });
-
-  // 監聽來自網頁的關燈請求
-  socket.on("light-off", function (msg) {
-    console.log("收到網頁使用者觸發關燈請求:", msg);
-    // 向Unity端發送開燈請求通知
-    io.emit("light-off", { message: "網頁使用者觸發關燈請求", _id: msg._id });
   });
 });
 
@@ -229,17 +209,15 @@ app.post("/upload", (req, res) => {
           category: fileType,
           gcsId: textureBlob.id,
         });
-        const savedImage = await newtexutureImage.save(); // 儲存資料並取得回傳的物件
-        const savedId = savedImage._id; // 取得儲存後的 ID
-        const message = "新貼圖上傳資料庫成功，等待發送成果圖";
-        io.emit("new-texture", { message: message, _id: savedId }); //發送 socket id 訊息給客戶端
+        await newtexutureImage.save();
+        io.emit("imageUploaded", { message: "New image uploaded" });
         res.json({
-          message: "新貼圖上傳資料庫成功",
+          message: "File uploaded successfully",
           data: newtexutureImage,
         });
       } catch (error) {
         console.error(error);
-        res.status(500).json({ error: "新貼圖上傳資料庫失敗" });
+        res.status(500).json({ error: "Error saving to database." });
       }
     });
 
