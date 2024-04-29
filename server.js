@@ -246,6 +246,7 @@ app.post("/upload", (req, res) => {
         const savedImage = await newtexutureImage.save(); // 儲存資料並取得回傳的物件
         const savedId = savedImage._id; // 取得儲存後的 ID
         const message = "新貼圖上傳資料庫成功，等待發送成果圖";
+        console.log({ message: message, _id: savedId });
         io.emit("new-texture", { message: message, _id: savedId }); //發送 socket id 訊息給客戶端
         res.json({
           message: "新貼圖上傳資料庫成功",
