@@ -20,8 +20,6 @@ const io = socket(server, {
   },
 });
 
-
-
 // 中間件設定
 app.use(express.json()); // 解析 JSON 格式的請求主體
 app.use(express.urlencoded({ extended: true })); // 解析 URL 編碼的請求主體
@@ -53,14 +51,22 @@ io.on("connection", function (socket) {
   socket.on("light-on", function (msg) {
     console.log("收到網頁使用者觸發開燈請求:", msg);
     // 向Unity端發送開燈請求通知
-    io.emit("light-on", { message: "網頁使用者觸發開燈請求", _id: msg._id });
+    io.emit("light-on", {
+      message: "網頁使用者觸發開燈請求",
+      _id: msg._id,
+      category: msg.category,
+    });
   });
 
   // 監聽來自網頁的關燈請求
   socket.on("light-off", function (msg) {
     console.log("收到網頁使用者觸發關燈請求:", msg);
     // 向Unity端發送開燈請求通知
-    io.emit("light-off", { message: "網頁使用者觸發關燈請求", _id: msg._id });
+    io.emit("light-off", {
+      message: "網頁使用者觸發關燈請求",
+      _id: msg._id,
+      category: msg.category,
+    });
   });
 });
 
