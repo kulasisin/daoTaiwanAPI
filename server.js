@@ -166,6 +166,23 @@ app.get("/images", async (req, res) => {
   res.json({ status: "success", data: texutureImages });
 });
 
+// 提供特定 ID 的材質圖片查詢 API
+app.get("/image/:id", async (req, res) => {
+  const textureImageId = req.params.id;
+  try {
+    // 在資料庫中查詢指定 ID 的材質圖片
+    const textureImage = await texutureImage.findById(textureImageId);
+    if (!textureImage) {
+      return res.status(404).json({ message: "Texture image not found." });
+    }
+    // 若找到，則回傳材質圖片資訊
+    res.json({ status: "success", data: textureImage });
+  } catch (error) {
+    console.error("Failed to fetch texture image: ", error);
+    res.status(500).json({ error: "Failed to fetch texture image." });
+  }
+});
+
 // 提供處理結果影像列表查詢 API
 app.get("/results", async (req, res) => {
   try {
