@@ -19,11 +19,8 @@ const io = socket(server, {
     origin: "*",
   },
 });
-//socket 設定
 
-// const app = express();
-// const server = http.createServer(app);
-// const io = socket(server);
+
 
 // 中間件設定
 app.use(express.json()); // 解析 JSON 格式的請求主體
