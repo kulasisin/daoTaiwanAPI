@@ -49,7 +49,7 @@ io.on("connection", function (socket) {
 
   // 監聽來自網頁的開燈請求
   socket.on("light-on", function (msg) {
-    console.log("收到網頁使用者觸發開燈請求:", msg);
+    console.log("收到網頁使用者觸發開燈請求:", msg); 
     // 向Unity端發送開燈請求通知
     io.emit("light-on", {
       message: "網頁使用者觸發開燈請求",
