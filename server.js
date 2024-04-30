@@ -44,7 +44,7 @@ io.on("connection", function (socket) {
   // 接收客戶端發送的訊息
   socket.on("message", function (msg) {
     console.log("Received message: ", msg);
-    socket.emit("message", "Server received message: " + msg);
+    io.emit("message", "Server received message: " + msg);
   });
 
   // 監聽來自網頁的開燈請求
